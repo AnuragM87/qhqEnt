@@ -1,12 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-def showHisto(psi_out):
-    labels = ["HH", "HV", "VH", "VV"]
-    probabilities = np.abs(psi_out)**2
+def showHisto(rho):
+    probs = np.real(np.diag(rho))
+    labels = ['HH', 'HV', 'VH', 'VV']
 
-    plt.bar(labels, probabilities)
-    plt.title("Output State Probabilities")
-    plt.xlabel("Basis State")
+    plt.figure()
+    plt.bar(labels, probs)
+    plt.ylim(0, 1)
     plt.ylabel("Probability")
+    plt.title("Population (Tomography)")
     plt.show()

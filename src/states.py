@@ -1,88 +1,28 @@
 import numpy as np
-H = np.array([1, 0], dtype=complex)   # Horizontal
-V = np.array([0, 1], dtype=complex)   # Vertical
 
-D = np.array([1/np.sqrt(2),  1/np.sqrt(2)], dtype=complex)   # Diagonal
-A = np.array([1/np.sqrt(2), -1/np.sqrt(2)], dtype=complex)   # Anti-diagonal
+H = np.array([1, 0], dtype=complex)
+V = np.array([0, 1], dtype=complex)
 
-R = np.array([1/np.sqrt(2), -1j/np.sqrt(2)], dtype=complex)  # Right circular
-L = np.array([1/np.sqrt(2),  1j/np.sqrt(2)], dtype=complex)  # Left circular
-
-#Tensor product
-def tp(a, b):
-    """Tensor product of two single-photon states"""
+def kron(a, b):
     return np.kron(a, b)
 
+def density(psi):
+    return np.outer(psi, psi.conj())
 
-# Basis states for two photons
-HH = tp(H, H)
-HV = tp(H, V)
-VH = tp(V, H)
-VV = tp(V, V)
+# Bell states (density matrices)
 
-# Bell State
+def rho_phi_plus():
+    psi = (kron(H, H) + kron(V, V)) / np.sqrt(2)
+    return density(psi)
 
-def phi_plus():
-    """|Φ+⟩ = (|HH⟩ + |VV⟩)/√2"""
-    return (HH + VV) / np.sqrt(2)
+def rho_phi_minus():
+    psi = (kron(H, H) - kron(V, V)) / np.sqrt(2)
+    return density(psi)
 
-def phi_minus():
-    """|Φ-⟩ = (|HH⟩ - |VV⟩)/√2"""
-    return (HH - VV) / np.sqrt(2)
+def rho_psi_plus():
+    psi = (kron(H, V) + kron(V, H)) / np.sqrt(2)
+    return density(psi)
 
-def psi_plus():
-    """|Ψ+⟩ = (|HV⟩ + |VH⟩)/√2"""
-    return (HV + VH) / np.sqrt(2)
-
-def psi_minus():
-    """|Ψ-⟩ = (|HV⟩ - |VH⟩)/√2"""
-    return (HV - VH) / np.sqrt(2)
-
-
-# def drifted_phi_plus(epsilon=0.05, phase=0.1, leakage=0.02):
-#     """
-#     Generate a realistic imperfect Φ+ state.
-
-#     Parameters
-#     ----------
-#     epsilon : float
-#         Amplitude imbalance (0 → perfect balance)
-#     phase : float
-#         Relative phase error between HH and VV
-#     leakage : float
-#         Small HV/VH mixing due to imperfections
-
-#     Returns
-#     -------
-#     psi : np.ndarray (4,)
-#         Normalized two-photon state vector
-#     """
-
-#     alpha = np.cos(np.pi/4 + epsilon)
-#     beta  = np.sin(np.pi/4 + epsilon) * np.exp(1j * phase)
-
-#     psi = alpha * HH + beta * VV + leakage * (HV + VH)
-#     psi /= np.linalg.norm(psi)
-
-#     return psi
-
-
-# # ============================================================
-# # 6️⃣ Density matrix utilities
-# # ============================================================
-
-# def density_matrix(psi):
-#     """
-#     Convert state vector → density matrix.
-#     """
-#     return np.outer(psi, psi.conj())
-
-
-# def fidelity(rho, target_state):
-#     """
-#     Compute fidelity between density matrix and target pure state.
-#     """
-#     return np.real(target_state.conj().T @ rho @ target_state)
-
-
-# # ==========================================================
+def rho_psi_minus():
+    psi = (kron(H, V) - kron(V, H)) / np.sqrt(2)
+    return density(psi)

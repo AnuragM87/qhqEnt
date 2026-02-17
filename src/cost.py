@@ -1,16 +1,37 @@
 import numpy as np
 from .qhqstates import U_total
+from scipy.linalg import sqrtm
 
-def cost_qhq(angles, psi_in, psi_target):
-    alpha1, beta1, gamma1 ,alpha2, beta2, gamma2 = angles
+def uhlmann_fidelity(rho, sigma):
+    """
+    Compute Uhlmann fidelity between two density matrices.
 
-    psi_out = U_total(alpha1, beta1, gamma1, alpha2, beta2, gamma2) @ psi_in
+    F(ρ,σ) = (Tr sqrt( sqrt(ρ) σ sqrt(ρ) ))^2
+    """
 
-    # Normalize states
-    psi_out = psi_out / np.linalg.norm(psi_out)
-    psi_target = psi_target / np.linalg.norm(psi_target)
+    # Ensure Hermitian
+    rho = (rho + rho.conj().T) / 2
+    sigma = (sigma + sigma.conj().T) / 2
 
-    # Phase-invariant fidelity
-    fidelity = np.abs(np.vdot(psi_target, psi_out))**2
+    sqrt_rho = sqrtm(rho)
+    inner = sqrt_rho @ sigma @ sqrt_rho
+    sqrt_inner = sqrtm(inner)
 
-    return 1 - fidelity
+    F = np.real(np.trace(sqrt_inner))**2
+
+    # Numerical guard
+    return min(max(F, 0.0), 1.0)
+
+
+def cost_qhq(angles, rho_in, rho_target):
+    """
+    Cost = 1 - Uhlmann fidelity
+    """
+
+    U = U_total(*angles)
+
+    rho_out = U @ rho_in @ U.conj().T
+
+    F = uhlmann_fidelity(rho_target, rho_out)
+
+    return 1 - F
