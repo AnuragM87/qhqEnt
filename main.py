@@ -6,6 +6,7 @@ from plot import showHisto
 
 psi_in=psi_minus()
 print("Input state:", psi_in)
+showHisto(psi_in)
 target_state = phi_plus()
 
 angles, fidelity ,best_result= find_qhq_angles_multistart(psi_in, target_state)
@@ -13,7 +14,7 @@ print(angles, fidelity)
 psi_out = U_total(*angles) @ psi_in
 rho = np.outer(psi_out, psi_out.conj())
 print(rho)
-# showHisto(psi_out)
+showHisto(psi_out)
 
 # def remove_global_phase(psi):
 #     return psi * np.exp(-1j * np.angle(psi[0]))
