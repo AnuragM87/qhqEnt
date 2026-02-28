@@ -1,10 +1,10 @@
-from scipy.optimize import minimize
 import numpy as np
+from scipy.optimize import minimize
 from .cost import cost_qhq
 
 def find_qhq_angles(rho_in, rho_target, x0=None):
     if x0 is None:
-        x0 = np.zeros(6)
+        x0 = np.random.uniform(0, 180, 6)
 
     bounds = [(0, 180)] * 6
 
@@ -18,18 +18,18 @@ def find_qhq_angles(rho_in, rho_target, x0=None):
 
     return res.x, 1 - res.fun, res
 
-def find_qhq_angles_multistart(rho_in, rho_target, n_starts=10):
-    best_F = -1
+
+def find_qhq_angles_multistart(rho_in, rho_target, n_starts=8):
+    best_fidelity = -1
     best_angles = None
-    best_res = None
+    best_result = None
 
     for _ in range(n_starts):
-        x0 = np.random.uniform(0, 180, size=6)
-        angles, F, res = find_qhq_angles(rho_in, rho_target, x0)
+        angles, fidelity, res = find_qhq_angles(rho_in, rho_target)
 
-        if F > best_F:
-            best_F = F
+        if fidelity > best_fidelity:
+            best_fidelity = fidelity
             best_angles = angles
-            best_res = res
+            best_result = res
 
-    return best_angles, best_F, best_res
+    return best_angles, best_fidelity, best_result

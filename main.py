@@ -1,40 +1,39 @@
-import numpy as np
-from src.load_density import load_density_matrix
+from src.io import load_density_matrix
 from src.states import rho_phi_plus
 from src.optimizer import find_qhq_angles_multistart
 from src.qhqstates import U_total
+from src.fidelity import uhlmann_fidelity
 from plot import showHisto
+import numpy as np
 
-# -----------------------------
-# Load tomography data
-# -----------------------------
-rho_in = load_density_matrix("data/tomography.txt")
-print("Loaded tomography matrix:\n", rho_in)
+# Load experimental tomography
+rho_in = load_density_matrix("tomography.txt")
 
+# Target Bell state
+rho_target = rho_phi_plus()
 showHisto(rho_in)
 
-# -----------------------------
-# Target: ideal or reconstructed Bell state
-# -----------------------------
-rho_target = rho_phi_plus()
+# Optimize waveplate angles
+fidelity=0
+counter=0
+while fidelity<0.98 and counter<20:
+    angles, fidelity, _ = find_qhq_angles_multistart(rho_in, rho_target)
+    print("iteration...")
+    counter+=1
 
-print("\nInitial fidelity:",
-      np.real(np.trace(rho_target @ rho_in)))
 
-# -----------------------------
-# Optimize QHQ angles
-# -----------------------------
-angles, fidelity, _ = find_qhq_angles_multistart(rho_in, rho_target)
+print("Optimal angles:", angles)
+print("Fidelity:", fidelity)
 
-print("\nBest angles:", angles)
-print("Final fidelity:", fidelity)
-
-# -----------------------------
 # Apply correction
-# -----------------------------
 U = U_total(*angles)
 rho_out = U @ rho_in @ U.conj().T
-
-print("\nCorrected density matrix:\n", rho_out)
-
+# print("Corrected density matrix:\n", rho_out)
+# Plot results
+# showHisto(rho_in)
 showHisto(rho_out)
+
+# print("Fidelity before:", uhlmann_fidelity(rho_target, rho_in))
+# print("Fidelity after :", uhlmann_fidelity(rho_target, rho_out))
+# print("Imag part before:\n", np.imag(rho_in))
+# print("Imag part after:\n", np.imag(rho_out))
