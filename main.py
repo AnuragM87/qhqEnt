@@ -1,6 +1,6 @@
 from src.io import load_density_matrix
 from src.states import rho_phi_plus
-from src.optimizer import find_qhq_angles_multistart,find_qhq_angles_hybrid,find_qhq_angles_de,find_qhq_angles_powell_multistart,find_qhq_angles_de_multirun
+from src.optimizer import find_qhq_angles_cobyla, find_qhq_angles_multistart,find_qhq_angles_hybrid,find_qhq_angles_de,find_qhq_angles_powell_multistart,find_qhq_angles_de_multirun
 from src.qhqstates import U_total
 from src.fidelity import uhlmann_fidelity
 from plot import showHisto
@@ -22,7 +22,7 @@ best_fidelity = initial_fidelity
 best_angles = None
 
 for _ in range(MAX_ITERS):
-    angles, fidelity, _ = find_qhq_angles_hybrid(rho_in, rho_target)
+    angles, fidelity, _ = find_qhq_angles_cobyla(rho_in, rho_target)
     print("Iteration...")
     if fidelity > best_fidelity:
         best_fidelity = fidelity

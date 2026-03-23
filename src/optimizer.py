@@ -207,3 +207,30 @@ def find_qhq_angles_hybrid(rho_in, rho_target):
     )
 
     return angles, fidelity, res
+
+def find_qhq_angles_cobyla(rho_in, rho_target, x0=None):
+    """
+    COBYLA — derivative-free, trust-region based.
+    Good for noisy fidelity landscapes.
+    """
+    if x0 is None:
+        x0 = np.random.uniform(0, 180, 6)
+
+    # COBYLA uses constraints instead of bounds
+    constraints = []
+    for i in range(6):
+        constraints.append({"type": "ineq", "fun": lambda x, i=i: x[i]})          # x[i] >= 0
+        constraints.append({"type": "ineq", "fun": lambda x, i=i: 180 - x[i]})    # x[i] <= 180
+
+    res = minimize(
+        cost_qhq,
+        x0=x0,
+        args=(rho_in, rho_target),
+        method="COBYLA",
+        constraints=constraints,
+        options={"maxiter": 3000, "rhobeg": 30, "catol": 1e-6}
+    )
+
+    angles = wrap_angles(res.x)
+    fidelity = 1 - res.fun
+    return angles, fidelity, res
