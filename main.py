@@ -1,6 +1,6 @@
 from src.io import load_density_matrix
 from src.states import rho_phi_plus
-from src.optimizer import find_qhq_angles_cobyla, find_qhq_angles_multistart,find_qhq_angles_hybrid,find_qhq_angles_de,find_qhq_angles_powell_multistart,find_qhq_angles_de_multirun
+from src.optimizer import find_qhq_angles_de_robust,find_qhq_angles_cobyla, find_qhq_angles_multistart,find_qhq_angles_hybrid,find_qhq_angles_de,find_qhq_angles_powell_multistart,find_qhq_angles_de_multirun
 from src.qhqstates import U_total
 from src.fidelity import uhlmann_fidelity
 from src.noise_compensation import depolarization_compensation, eigenvalue_filter
@@ -12,6 +12,7 @@ rho_raw = load_density_matrix("tomography.txt")
 
 # Target Bell state
 rho_target = rho_phi_plus()
+# print(rho_target)
 
 # =========================================================
 # PREPROCESSING: Pick ONE method (comment/uncomment)
@@ -28,12 +29,13 @@ rho_in = eigenvalue_filter(rho_raw, rank=1)
 
 # =========================================================
 
-initial_fidelity=uhlmann_fidelity(rho_target, rho_in)
+# initial_fidelity=uhlmann_fidelity(rho_target, rho_in)
+initial_fidelity=uhlmann_fidelity(rho_target, rho_raw)
 print(f"Initial fidelity: {initial_fidelity:.4f}")
 # showHisto(rho_in)
 
 # Optimize waveplate angles
-MAX_ITERS = 20
+MAX_ITERS = 10
 TARGET = 0.98
 
 best_fidelity = initial_fidelity
@@ -51,16 +53,24 @@ for _ in range(MAX_ITERS):
 
 
 print("Optimal angles:", best_angles)
-print("Fidelity:", fidelity)
+print("Best fidelity:", best_fidelity)
 
-# Apply correction
-U = U_total(*best_angles)
-rho_out = U @ rho_in @ U.conj().T
-print("Corrected density matrix:\n", rho_out)
+if best_angles is None:
+    print("\n⚠ Optimizer could not improve on the initial fidelity.")
+    print(f"  Initial fidelity:    {initial_fidelity:.6f}")
+    print(f"  Best optimizer run:  {fidelity:.6f}")
+    print("  Skipping correction — the preprocessed state is already optimal.")
+    rho_out = rho_in
+else:
+    # Apply correction
+    U = U_total(*best_angles)
+    rho_out = U @ rho_in @ U.conj().T
+    print("Corrected density matrix:\n", rho_out)
+
 # Plot results
-showHisto(rho_raw)
+# showHisto(rho_raw)
 # showHisto(rho_in)
-showHisto(rho_out)
+# showHisto(rho_out)
 
 print("Fidelity before:", uhlmann_fidelity(rho_target, rho_in))
 print("Fidelity after :", uhlmann_fidelity(rho_target, rho_out))
