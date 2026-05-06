@@ -199,27 +199,27 @@ def make_population_chart(rho_raw, rho_corrected=None):
     x = np.arange(len(labels))
     width = 0.35
 
-    fig, ax = plt.subplots(figsize=(5, 3.5), facecolor="#0e1117")
-    ax.set_facecolor("#161b22")
+    fig, ax = plt.subplots(figsize=(5, 3.5), facecolor="#ffffff")
+    ax.set_facecolor("#f8f9fa")
 
     probs_raw = np.real(np.diag(rho_raw))
     if rho_corrected is not None:
         probs_corr = np.real(np.diag(rho_corrected))
-        ax.bar(x - width/2, probs_raw, width, label="Input", color="#1f6feb", edgecolor="#58a6ff", linewidth=0.5)
-        ax.bar(x + width/2, probs_corr, width, label="Corrected", color="#238636", edgecolor="#3fb950", linewidth=0.5)
-        ax.legend(fontsize=8, facecolor="#161b22", edgecolor="#30363d", labelcolor="#c9d1d9")
+        ax.bar(x - width/2, probs_raw, width, label="Input", color="#4a90d9", edgecolor="#2c6fbb", linewidth=0.5)
+        ax.bar(x + width/2, probs_corr, width, label="Corrected", color="#2da44e", edgecolor="#1a7f37", linewidth=0.5)
+        ax.legend(fontsize=8, facecolor="#ffffff", edgecolor="#d0d7de", labelcolor="#24292f")
     else:
-        ax.bar(x, probs_raw, width, color="#1f6feb", edgecolor="#58a6ff", linewidth=0.5)
+        ax.bar(x, probs_raw, width, color="#4a90d9", edgecolor="#2c6fbb", linewidth=0.5)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, fontsize=9, color="#c9d1d9")
+    ax.set_xticklabels(labels, fontsize=9, color="#24292f")
     ax.set_ylim(0, 0.65)
-    ax.set_ylabel("Population", fontsize=9, color="#8b949e")
-    ax.set_title("State Populations", fontsize=10, color="#c9d1d9", pad=8)
-    ax.tick_params(colors="#8b949e", labelsize=8)
+    ax.set_ylabel("Population", fontsize=9, color="#57606a")
+    ax.set_title("State Populations", fontsize=10, color="#24292f", pad=8)
+    ax.tick_params(colors="#57606a", labelsize=8)
     for spine in ax.spines.values():
-        spine.set_color("#30363d")
-    ax.grid(axis="y", color="#21262d", linewidth=0.5)
+        spine.set_color("#d0d7de")
+    ax.grid(axis="y", color="#e1e4e8", linewidth=0.5)
 
     fig.tight_layout()
     return fig
@@ -230,25 +230,25 @@ def make_density_heatmap(rho, title="Density Matrix |ρ|"):
     labels = ["|HH⟩", "|HV⟩", "|VH⟩", "|VV⟩"]
     mag = np.abs(rho)
 
-    fig, ax = plt.subplots(figsize=(4, 3.5), facecolor="#0e1117")
-    im = ax.imshow(mag, cmap="inferno", vmin=0, vmax=0.55, aspect="equal")
+    fig, ax = plt.subplots(figsize=(4, 3.5), facecolor="#ffffff")
+    im = ax.imshow(mag, cmap="YlOrRd", vmin=0, vmax=0.55, aspect="equal")
     ax.set_xticks(range(4))
     ax.set_yticks(range(4))
-    ax.set_xticklabels(labels, fontsize=8, color="#c9d1d9")
-    ax.set_yticklabels(labels, fontsize=8, color="#c9d1d9")
-    ax.set_title(title, fontsize=10, color="#c9d1d9", pad=8)
-    ax.tick_params(colors="#8b949e")
+    ax.set_xticklabels(labels, fontsize=8, color="#24292f")
+    ax.set_yticklabels(labels, fontsize=8, color="#24292f")
+    ax.set_title(title, fontsize=10, color="#24292f", pad=8)
+    ax.tick_params(colors="#57606a")
 
     # Annotate cells
     for i in range(4):
         for j in range(4):
             val = mag[i, j]
-            color = "#e0e0e0" if val < 0.3 else "#0d1117"
+            color = "#24292f" if val < 0.3 else "#ffffff"
             ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=7.5, color=color, fontfamily="monospace")
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.ax.tick_params(labelsize=7, colors="#8b949e")
-    cbar.outline.set_edgecolor("#30363d")
+    cbar.ax.tick_params(labelsize=7, colors="#57606a")
+    cbar.outline.set_edgecolor("#d0d7de")
 
     fig.tight_layout()
     return fig
