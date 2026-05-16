@@ -11,3 +11,7 @@ def rho_phi_minus():
 def rho_psi_minus():
     psi = np.array([0, 1, -1, 0], dtype=complex) / np.sqrt(2)
     return np.outer(psi, psi.conj())
+
+def rho_psi_plus():
+    psi = np.array([0, 1, 1, 0], dtype=complex) / np.sqrt(2)
+    return np.outer(psi, psi.conj())

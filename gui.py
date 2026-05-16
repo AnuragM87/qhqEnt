@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 
 # ── Backend imports ──────────────────────────────────────────
 from src.io import load_density_matrix
-from src.states import rho_phi_plus, rho_phi_minus, rho_psi_minus
+from src.states import rho_phi_plus, rho_phi_minus, rho_psi_minus, rho_psi_plus,rho_psi_plus 
 from src.optimizer import (
     find_qhq_angles_multistart,
     find_qhq_angles_hybrid,
@@ -259,6 +259,7 @@ TARGET_STATES = {
     "Φ⁺  (|HH⟩+|VV⟩)/√2": rho_phi_plus,
     "Φ⁻  (|HH⟩−|VV⟩)/√2": rho_phi_minus,
     "Ψ⁻  (|HV⟩−|VH⟩)/√2": rho_psi_minus,
+    "Ψ⁺  (|HV⟩+|VH⟩)/√2": rho_psi_plus,
 }
 
 OPTIMIZERS = {
@@ -320,10 +321,10 @@ with st.sidebar:
 
     # ── Preprocessing ──
     st.markdown("### 🔧 Preprocessing")
-    preprocess = st.radio("Method", ["None (raw data)", "Eigenvalue Filter", "Depolarization Compensation"],
+    preprocess = st.radio("Method", ["None (raw data)", "Noise Reduction"],#, "Depolarization Compensation"],
                           label_visibility="collapsed")
 
-    if preprocess == "Eigenvalue Filter":
+    if preprocess == "Noise Reduction":
         eigen_rank = st.number_input("Rank (eigenstates to keep)", min_value=1, max_value=4, value=1)
     elif preprocess == "Depolarization Compensation":
         depol_p = st.number_input("Noise fraction p (auto if 0)", min_value=0.0, max_value=0.99, value=0.0, step=0.01)
@@ -373,7 +374,7 @@ if run_clicked:
     with contextlib.redirect_stdout(log_buffer):
         if preprocess == "None (raw data)":
             rho_in = rho_raw
-        elif preprocess == "Eigenvalue Filter":
+        elif preprocess == "Noise Reduction":
             rho_in = eigenvalue_filter(rho_raw, rank=eigen_rank)
         elif preprocess == "Depolarization Compensation":
             p = depol_p if depol_p > 0 else None
@@ -443,18 +444,20 @@ if st.session_state.optimized:
 
     # ── Metrics row ──
     st.markdown("## 📊 Results")
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2= st.columns(2)
     with m1:
         st.metric("Fidelity (raw)", f"{initial_fidelity:.4f}")
     with m2:
-        st.metric("Fidelity (preprocessed)", f"{fidelity_preprocessed:.4f}",
-                   delta=f"{fidelity_preprocessed - initial_fidelity:+.4f}")
-    with m3:
         st.metric("Fidelity (corrected)", f"{fidelity_after:.4f}",
                    delta=f"{fidelity_after - initial_fidelity:+.4f}")
-    with m4:
-        st.metric("Purity (output)", f"{purity_out:.4f}",
-                   delta=f"{purity_out - purity_in:+.4f}")
+    #     st.metric("Fidelity (preprocessed)", f"{fidelity_preprocessed:.4f}",
+    #                delta=f"{fidelity_preprocessed - initial_fidelity:+.4f}")
+    # with m3:
+    #     st.metric("Fidelity (corrected)", f"{fidelity_after:.4f}",
+    #                delta=f"{fidelity_after - initial_fidelity:+.4f}")
+    # with m4:
+    #     st.metric("Purity (output)", f"{purity_out:.4f}",
+    #                delta=f"{purity_out - purity_in:+.4f}")
 
     st.markdown("---")
 
