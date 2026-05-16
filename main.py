@@ -7,34 +7,15 @@ from src.noise_compensation import depolarization_compensation, eigenvalue_filte
 from plot import showHisto
 import numpy as np
 
-# Load experimental tomography
 rho_raw = load_density_matrix("tomography.txt")
 
-# Target Bell state
 rho_target = rho_phi_plus()
-# print(rho_target)
 
-# =========================================================
-# PREPROCESSING: Pick ONE method (comment/uncomment)
-# =========================================================
-
-# Method 1: No cleaning (use raw tomography data)
-# rho_in = rho_raw
-
-# Method 2: Depolarization compensation (inverts depolarizing noise)
-# rho_in, p_est = depolarization_compensation(rho_raw)
-
-# Method 3: Eigenvalue filtering (keeps top eigenstate, discards noise)
 rho_in = eigenvalue_filter(rho_raw, rank=1)
 
-# =========================================================
-
-# initial_fidelity=uhlmann_fidelity(rho_target, rho_in)
 initial_fidelity=uhlmann_fidelity(rho_target, rho_raw)
 print(f"Initial fidelity: {initial_fidelity:.4f}")
-# showHisto(rho_in)
 
-# Optimize waveplate angles
 MAX_ITERS = 10
 TARGET = 0.98
 
@@ -51,7 +32,6 @@ for _ in range(MAX_ITERS):
     if best_fidelity >= TARGET:
         break
 
-
 print("Optimal angles:", best_angles)
 print("Best fidelity:", best_fidelity)
 
@@ -62,15 +42,9 @@ if best_angles is None:
     print("  Skipping correction — the preprocessed state is already optimal.")
     rho_out = rho_in
 else:
-    # Apply correction
     U = U_total(*best_angles)
     rho_out = U @ rho_in @ U.conj().T
     print("Corrected density matrix:\n", rho_out)
-
-# Plot results
-# showHisto(rho_raw)
-# showHisto(rho_in)
-# showHisto(rho_out)
 
 print("Fidelity before:", uhlmann_fidelity(rho_target, rho_in))
 print("Fidelity after :", uhlmann_fidelity(rho_target, rho_out))

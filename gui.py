@@ -8,7 +8,6 @@ import contextlib
 
 matplotlib.use("Agg")
 
-# ── Backend imports ──────────────────────────────────────────
 from src.io import load_density_matrix
 from src.states import rho_phi_plus, rho_phi_minus, rho_psi_minus, rho_psi_plus,rho_psi_plus 
 from src.optimizer import (
@@ -22,16 +21,14 @@ from src.optimizer import (
 )
 from src.qhqstates import U_total
 from src.fidelity import uhlmann_fidelity
-from src.noise_compensation import depolarization_compensation, eigenvalue_filter
+from src.noise_compensation import eigenvalue_filter
 
-# ── Page config ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Polarization Correction QHQ",
+    page_title="Polarization Correction Using QHQ Waveplates",
     page_icon="⚛️",
     layout="wide",
 )
 
-# ── Custom CSS for scientific look ───────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
@@ -173,9 +170,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-# ── Helper functions ─────────────────────────────────────────
-
 def format_matrix(mat, precision=4):
     """Format a complex matrix as aligned text."""
     rows = []
@@ -191,7 +185,6 @@ def format_matrix(mat, precision=4):
                 cols.append(f"{re:.{precision}f}{sign}{abs(im):.{precision}f}j")
         rows.append("  ".join(cols))
     return "\n".join(rows)
-
 
 def make_population_chart(rho_raw, rho_corrected=None):
     """Bar chart of diagonal populations."""
@@ -224,7 +217,6 @@ def make_population_chart(rho_raw, rho_corrected=None):
     fig.tight_layout()
     return fig
 
-
 def make_density_heatmap(rho, title="Density Matrix |ρ|"):
     """Heatmap of density matrix magnitudes."""
     labels = ["|HH⟩", "|HV⟩", "|VH⟩", "|VV⟩"]
@@ -239,7 +231,6 @@ def make_density_heatmap(rho, title="Density Matrix |ρ|"):
     ax.set_title(title, fontsize=10, color="#24292f", pad=8)
     ax.tick_params(colors="#57606a")
 
-    # Annotate cells
     for i in range(4):
         for j in range(4):
             val = mag[i, j]
@@ -253,8 +244,6 @@ def make_density_heatmap(rho, title="Density Matrix |ρ|"):
     fig.tight_layout()
     return fig
 
-
-# ── Target state map ─────────────────────────────────────────
 TARGET_STATES = {
     "Φ⁺  (|HH⟩+|VV⟩)/√2": rho_phi_plus,
     "Φ⁻  (|HH⟩−|VV⟩)/√2": rho_phi_minus,
@@ -266,39 +255,32 @@ OPTIMIZERS = {
     "Multistart L-BFGS-B": find_qhq_angles_multistart,
     "Powell Multistart": find_qhq_angles_powell_multistart,
     "Differential Evolution": find_qhq_angles_de,
-    "DE Robust (recommended)": find_qhq_angles_de_robust,
+    "DE Robust ": find_qhq_angles_de_robust,
     "DE Multi-run": find_qhq_angles_de_multirun,
     "Hybrid (DE → Powell)": find_qhq_angles_hybrid,
     "COBYLA": find_qhq_angles_cobyla,
 }
 
-# ── Session state init ───────────────────────────────────────
 for key in ["rho_raw", "rho_in", "rho_target", "rho_out",
             "best_angles", "best_fidelity", "initial_fidelity",
-            "log_output", "optimized", "preprocess_info"]:
+            "optimized", "preprocess_info"]:
     if key not in st.session_state:
         st.session_state[key] = None
 
 if "optimized" not in st.session_state:
     st.session_state.optimized = False
 
-
-# ══════════════════════════════════════════════════════════════
-#  SIDEBAR — Configuration
-# ══════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("## ⚛️ Configuration")
 
-    # ── File Upload ──
     st.markdown("### 📂 Tomography Data")
     upload_mode = st.radio("Input method", ["Upload file", "Use default (tomography.txt)"],
-                           horizontal=True, label_visibility="collapsed")
+                           horizontal=True, label_visibility="collapsed", index=1)
 
     if upload_mode == "Upload file":
         uploaded = st.file_uploader("Tomography matrix file", type=["txt", "csv", "dat"],
                                      label_visibility="collapsed")
         if uploaded is not None:
-            # Save temp file and load
             tmp_path = "/tmp/uploaded_tomography.txt"
             with open(tmp_path, "wb") as f:
                 f.write(uploaded.read())
@@ -311,7 +293,6 @@ with st.sidebar:
 
     st.divider()
 
-    # ── Target State ──
     st.markdown("### 🎯 Target State")
     target_name = st.selectbox("Target Bell state", list(TARGET_STATES.keys()),
                                 label_visibility="collapsed")
@@ -319,38 +300,28 @@ with st.sidebar:
 
     st.divider()
 
-    # ── Preprocessing ──
     st.markdown("### 🔧 Preprocessing")
-    preprocess = st.radio("Method", ["None (raw data)", "Noise Reduction"],#, "Depolarization Compensation"],
-                          label_visibility="collapsed")
+    preprocess = st.radio("Method", ["None (raw data)", "Noise Reduction"],
+                          label_visibility="collapsed", index=1)
 
     if preprocess == "Noise Reduction":
         eigen_rank = st.number_input("Rank (eigenstates to keep)", min_value=1, max_value=4, value=1)
-    elif preprocess == "Depolarization Compensation":
-        depol_p = st.number_input("Noise fraction p (auto if 0)", min_value=0.0, max_value=0.99, value=0.0, step=0.01)
 
     st.divider()
 
-    # ── Optimizer ──
     st.markdown("### ⚡ Optimizer")
     optimizer_name = st.selectbox("Algorithm", list(OPTIMIZERS.keys()),
-                                   index=3, label_visibility="collapsed")
+                                   index=0, label_visibility="collapsed")
 
     col_a, col_b = st.columns(2)
     with col_a:
-        max_iters = st.number_input("Iterations", min_value=1, max_value=100, value=5)
+        max_iters = st.number_input("Iterations", min_value=1, max_value=100, value=50)
     with col_b:
-        target_fidelity = st.number_input("Target F", min_value=0.50, max_value=1.00, value=0.98, step=0.01)
+        target_fidelity = st.number_input("Target F", min_value=0.50, max_value=1.00, value=0.99, step=0.01)
 
     st.divider()
 
-    # ── Run Button ──
     run_clicked = st.button("▶  Run Optimization", use_container_width=True, type="primary")
-
-
-# ══════════════════════════════════════════════════════════════
-#  MAIN AREA
-# ══════════════════════════════════════════════════════════════
 
 st.markdown("# ⚛️ Polarization Correction QHQ")
 st.caption("Quantum waveplate angle optimization for Bell state fidelity recovery")
@@ -362,67 +333,50 @@ if st.session_state.rho_raw is None:
 rho_raw = st.session_state.rho_raw
 rho_target = st.session_state.rho_target
 
-# ── Display raw matrix ───────────────────────────────────────
 with st.expander("📋 Loaded Density Matrix (raw)", expanded=False):
     st.markdown(f'<div class="matrix-display">{format_matrix(rho_raw)}</div>', unsafe_allow_html=True)
 
-# ── Run optimization ─────────────────────────────────────────
 if run_clicked:
-    log_buffer = io.StringIO()
-
-    # Preprocessing
-    with contextlib.redirect_stdout(log_buffer):
-        if preprocess == "None (raw data)":
-            rho_in = rho_raw
-        elif preprocess == "Noise Reduction":
-            rho_in = eigenvalue_filter(rho_raw, rank=eigen_rank)
-        elif preprocess == "Depolarization Compensation":
-            p = depol_p if depol_p > 0 else None
-            rho_in, _ = depolarization_compensation(rho_raw, p=p)
+    if preprocess == "None (raw data)":
+        rho_in = rho_raw
+    elif preprocess == "Noise Reduction":
+        rho_in = eigenvalue_filter(rho_raw, rank=eigen_rank)
 
     st.session_state.rho_in = rho_in
     initial_fidelity = uhlmann_fidelity(rho_target, rho_raw)
     st.session_state.initial_fidelity = initial_fidelity
 
-    # Optimization loop
     optimizer_fn = OPTIMIZERS[optimizer_name]
     best_fidelity = initial_fidelity
     best_angles = None
 
     progress_bar = st.progress(0, text="Optimizing...")
 
-    with contextlib.redirect_stdout(log_buffer):
-        for i in range(max_iters):
-            angles, fidelity, _ = optimizer_fn(rho_in, rho_target)
-            print(f"Iteration {i+1}/{max_iters}: fidelity = {fidelity:.6f}")
+    for i in range(max_iters):
+        angles, fidelity, _ = optimizer_fn(rho_in, rho_target)
 
-            if fidelity > best_fidelity:
-                best_fidelity = fidelity
-                best_angles = angles
+        if fidelity > best_fidelity:
+            best_fidelity = fidelity
+            best_angles = angles
 
-            progress_bar.progress((i + 1) / max_iters, text=f"Iteration {i+1}/{max_iters} — best F = {best_fidelity:.6f}")
+        progress_bar.progress((i + 1) / max_iters, text=f"Iteration {i+1}/{max_iters} — best F = {best_fidelity:.6f}")
 
-            if best_fidelity >= target_fidelity:
-                print(f"Target fidelity {target_fidelity} reached!")
-                break
+        if best_fidelity >= target_fidelity:
+            break
 
     progress_bar.empty()
 
-    # Apply correction
     if best_angles is not None:
         U = U_total(*best_angles)
         rho_out = U @ rho_in @ U.conj().T
     else:
         rho_out = rho_in
 
-    # Store results
     st.session_state.best_angles = best_angles
     st.session_state.best_fidelity = best_fidelity
     st.session_state.rho_out = rho_out
-    st.session_state.log_output = log_buffer.getvalue()
     st.session_state.optimized = True
 
-# ── Display results ──────────────────────────────────────────
 if st.session_state.optimized:
     rho_in = st.session_state.rho_in
     rho_out = st.session_state.rho_out
@@ -434,7 +388,6 @@ if st.session_state.optimized:
     purity_in = np.real(np.trace(rho_in @ rho_in))
     purity_out = np.real(np.trace(rho_out @ rho_out))
 
-    # Status
     if best_angles is not None:
         st.markdown('<span class="status-badge status-done">✓ OPTIMIZATION COMPLETE</span>', unsafe_allow_html=True)
     else:
@@ -442,7 +395,6 @@ if st.session_state.optimized:
 
     st.markdown("---")
 
-    # ── Metrics row ──
     st.markdown("## 📊 Results")
     m1, m2= st.columns(2)
     with m1:
@@ -450,18 +402,9 @@ if st.session_state.optimized:
     with m2:
         st.metric("Fidelity (corrected)", f"{fidelity_after:.4f}",
                    delta=f"{fidelity_after - initial_fidelity:+.4f}")
-    #     st.metric("Fidelity (preprocessed)", f"{fidelity_preprocessed:.4f}",
-    #                delta=f"{fidelity_preprocessed - initial_fidelity:+.4f}")
-    # with m3:
-    #     st.metric("Fidelity (corrected)", f"{fidelity_after:.4f}",
-    #                delta=f"{fidelity_after - initial_fidelity:+.4f}")
-    # with m4:
-    #     st.metric("Purity (output)", f"{purity_out:.4f}",
-    #                delta=f"{purity_out - purity_in:+.4f}")
 
     st.markdown("---")
 
-    # ── Angles + Matrices ──
     col_left, col_right = st.columns([1, 1])
 
     with col_left:
@@ -493,7 +436,6 @@ if st.session_state.optimized:
 
     st.markdown("---")
 
-    # ── Plots ──
     st.markdown("## 📈 Visualization")
     p1, p2 = st.columns(2)
 
@@ -507,7 +449,6 @@ if st.session_state.optimized:
         st.pyplot(fig_heatmap, use_container_width=True)
         plt.close(fig_heatmap)
 
-    # ── Target comparison ──
     with st.expander("🎯 Target vs Corrected Comparison", expanded=False):
         tc1, tc2 = st.columns(2)
         with tc1:
@@ -516,11 +457,6 @@ if st.session_state.optimized:
         with tc2:
             st.markdown("**Corrected ρ**")
             st.markdown(f'<div class="matrix-display">{format_matrix(rho_out)}</div>', unsafe_allow_html=True)
-
-    # ── Log console ──
-    with st.expander("🖥️ Optimizer Log", expanded=False):
-        log = st.session_state.log_output or "No log output."
-        st.markdown(f'<div class="log-console">{log}</div>', unsafe_allow_html=True)
 
 else:
     st.markdown("---")
@@ -531,7 +467,6 @@ else:
     3. **Click Run** to optimize waveplate angles
     """)
 
-    # Show raw state plots
     if rho_raw is not None:
         st.markdown("## 📈 Input State")
         p1, p2 = st.columns(2)

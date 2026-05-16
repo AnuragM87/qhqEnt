@@ -13,7 +13,6 @@ def UQ(theta_deg):
         [off,         s2 + 1j * c2]
     ], dtype=complex)
 
-
 def UH(theta_deg):
     th = np.deg2rad(theta_deg)
     c2 = np.cos(2 * th)
