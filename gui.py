@@ -18,6 +18,13 @@ from src.optimizer import (
     find_qhq_angles_powell_multistart,
     find_qhq_angles_cobyla,
     find_qhq_angles_de_multirun,
+    find_qhq_angles_spsa,
+    find_qhq_angles_spsa_multistart,
+    find_qhq_angles_basin_hopping,
+    find_qhq_angles_basin_hopping_multistart,
+    find_qhq_angles_dual_annealing,
+    find_qhq_angles_cmaes,
+    find_qhq_angles_cmaes_multistart,
 )
 from src.qhqstates import U_total
 from src.fidelity import uhlmann_fidelity
@@ -252,13 +259,24 @@ TARGET_STATES = {
 }
 
 OPTIMIZERS = {
-    "Multistart L-BFGS-B": find_qhq_angles_multistart,
-    "Powell Multistart": find_qhq_angles_powell_multistart,
-    "Differential Evolution": find_qhq_angles_de,
-    "DE Robust ": find_qhq_angles_de_robust,
-    "DE Multi-run": find_qhq_angles_de_multirun,
-    "Hybrid (DE → Powell)": find_qhq_angles_hybrid,
-    "COBYLA": find_qhq_angles_cobyla,
+    # ── Gradient-based (fastest) ──────────────────────────────────────────
+    "Multistart L-BFGS-B":        find_qhq_angles_multistart,
+    "Powell Multistart":           find_qhq_angles_powell_multistart,
+    # ── Smooth multi-modal specialists (recommended) ──────────────────────
+    "Basin-Hopping":               find_qhq_angles_basin_hopping,
+    "Basin-Hopping Multistart":    find_qhq_angles_basin_hopping_multistart,
+    "Dual Annealing":              find_qhq_angles_dual_annealing,
+    "CMA-ES":                      find_qhq_angles_cmaes,
+    "CMA-ES Multistart":           find_qhq_angles_cmaes_multistart,
+    # ── Evolutionary / population-based ───────────────────────────────────
+    "Differential Evolution":      find_qhq_angles_de,
+    "DE Robust":                   find_qhq_angles_de_robust,
+    "DE Multi-run":                find_qhq_angles_de_multirun,
+    "Hybrid (DE → Powell)":        find_qhq_angles_hybrid,
+    # ── Derivative-free / noisy-landscape ────────────────────────────────
+    "COBYLA":                      find_qhq_angles_cobyla,
+    "SPSA":                        find_qhq_angles_spsa,
+    "SPSA Multistart":             find_qhq_angles_spsa_multistart,
 }
 
 for key in ["rho_raw", "rho_in", "rho_target", "rho_out",
