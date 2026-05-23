@@ -25,6 +25,7 @@ from src.optimizer import (
     find_qhq_angles_dual_annealing,
     find_qhq_angles_cmaes,
     find_qhq_angles_cmaes_multistart,
+    find_qhq_angles_powell,
 )
 from src.qhqstates import U_total
 from src.fidelity import uhlmann_fidelity
@@ -262,6 +263,7 @@ OPTIMIZERS = {
     # ── Gradient-based (fastest) ──────────────────────────────────────────
     "Multistart L-BFGS-B":        find_qhq_angles_multistart,
     "Powell Multistart":           find_qhq_angles_powell_multistart,
+    "Powell":                    find_qhq_angles_powell,
     # ── Smooth multi-modal specialists (recommended) ──────────────────────
     "Basin-Hopping":               find_qhq_angles_basin_hopping,
     "Basin-Hopping Multistart":    find_qhq_angles_basin_hopping_multistart,
@@ -333,9 +335,9 @@ with st.sidebar:
 
     col_a, col_b = st.columns(2)
     with col_a:
-        max_iters = st.number_input("Iterations", min_value=1, max_value=100, value=50)
+        max_iters = st.number_input("Iterations", min_value=1, max_value=1000, value=10)
     with col_b:
-        target_fidelity = st.number_input("Target F", min_value=0.50, max_value=1.00, value=0.99, step=0.01)
+        target_fidelity = st.number_input("Target F", min_value=0.50, max_value=1.00, value=1.00, step=0.01)
 
     st.divider()
 
